@@ -1,4 +1,5 @@
 const { OBJECT_ID, ELEM_IDS, MAX_ELEM } = require('./constants')
+const { Cursor } = require('./cursor')
 
 class Text {
   constructor (text) {
@@ -151,6 +152,10 @@ class Text {
       throw new TypeError('Automerge.Text object cannot be modified outside of a change block')
     }
     return this
+  }
+
+  cursorAt(index) {
+    return new Cursor(this, index === 0 ? '_head' : this.getElemId(index))
   }
 }
 

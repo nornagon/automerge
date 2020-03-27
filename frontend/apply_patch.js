@@ -1,6 +1,7 @@
 const { ROOT_ID, isObject, copyObject, parseElemId } = require('../src/common')
 const { OPTIONS, OBJECT_ID, CONFLICTS, ELEM_IDS, MAX_ELEM } = require('./constants')
-const { Text, instantiateText } = require('./text')
+const { instantiateText } = require('./text')
+const { Cursor } = require('./cursor')
 const { Table, instantiateTable } = require('./table')
 const { Counter } = require('./counter')
 
@@ -16,6 +17,9 @@ function getValue(diff, cache, updated) {
     return new Date(diff.value)
   } else if (diff.datatype === 'counter') {
     return new Counter(diff.value)
+  } else if (diff.datatype === 'cursor') {
+    const [ref, elemId] = diff.value.split('\0')
+    return new Cursor(updated[ref] || cache[ref], elemId)
   } else if (diff.datatype !== undefined) {
     throw new TypeError(`Unknown datatype: ${diff.datatype}`)
   } else {

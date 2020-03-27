@@ -1,6 +1,7 @@
 const { CACHE, INBOUND, OBJECT_ID, CONFLICTS, MAX_ELEM } = require('./constants')
 const { applyDiffs } = require('./apply_patch')
 const { Text, getElemId } = require('./text')
+const { Cursor } = require('./cursor')
 const { Table } = require('./table')
 const { Counter, getWriteableCounter } = require('./counter')
 const { isObject, copyObject } = require('../src/common')
@@ -125,8 +126,9 @@ class Context {
    * is a reference to another object, `{value: otherObjectId, link: true}` is
    * returned; otherwise `{value: primitiveValue, datatype: someType}` is
    * returned. The datatype is only present for values that need to be
-   * interpreted in a special way (timestamps, counters); for primitive types
-   * (string, number, boolean, null) the datatype property is omitted.
+   * interpreted in a special way (timestamps, counters, cursors); for
+   * primitive types (string, number, boolean, null) the datatype property is
+   * omitted.
    */
   setValue(obj, key, value) {
     if (!['object', 'boolean', 'number', 'string'].includes(typeof value)) {
@@ -144,6 +146,13 @@ class Context {
         // Counter object, save current value
         this.addOp({action: 'set', obj, key, value: value.value, datatype: 'counter'})
         return {value: value.value, datatype: 'counter'}
+
+      } else if (value instanceof Cursor) {
+        // TODO: why does an object here sometimes get converted into an ImmutableJS map?
+        //const v = {ref: value.ref[OBJECT_ID], elemId: value.elemId}
+        const v = `${value.ref[OBJECT_ID]}\0${value.elemId}`
+        this.addOp({action: 'set', obj, key, value: v, datatype: 'cursor'})
+        return {value: v, datatype: 'cursor'}
 
       } else {
         // Reference to another object
